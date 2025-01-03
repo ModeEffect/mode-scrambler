@@ -1,7 +1,27 @@
-# WipeUserData
-SQL commands to run on a development database to wipe sensitive user data and WooCommerce customer data
+# ModeEffect Scrambler 
+Run WP CLI command to wipe sensitive user data and WooCommerce customer data.
 
 ## Usage
 
-1. Import the `WP-wipe-user-data.sql` file into your MySQL database
-2. If WooCommerce, Import the `WC-wipe-user-data.sql` file into your MySQL database
+`wp scramble`
+
+## Subcommands
+
+- `wp scramble wp`
+- `wp scramble wc`
+- `wp scramble version`
+
+## Options
+
+`--email`
+- Any string in `user_email` to ignore. 
+- Default: modeeffect.com
+
+## Examples
+
+```
+$ wp scramble wp --emal=some-string
+WordPress use data scrambled successfully!
+
+$ wp scramble wc --emal=some-string
+WooCommerce customer data scrambled successfully!
