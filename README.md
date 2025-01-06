@@ -1,5 +1,5 @@
 # ModeEffect Scrambler 
-Run WP CLI command to wipe sensitive user data and WooCommerce customer data.
+Run WP CLI command to scramble sensitive user data and WooCommerce customer data.
 
 ## Usage
 

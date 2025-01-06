@@ -2,7 +2,7 @@
 /*
 Plugin Name: ModeEffect Scrambler
 Plugin URI: https://modeeffect.com/
-Description: Wipe sensitive user data and WooCommerce customer data.
+Description: Scramble sensitive user data and WooCommerce customer data.
 Version: 1.0.0
 Author: KevinBrent
 Author URI: https://modeeffect.com/
@@ -26,22 +26,49 @@ if ( ! defined( 'ABSPATH' ) ) {
 define( 'MODE_SCRAMBLER_VERSION', '1.0.0' );
 
 class Scrambler {
-    
+
+    /**
+     * @var string
+     */
+
     protected string $environment;
-    
+
+    /**
+     * @var string
+     */
+
     private string $email = 'modeeffect.com';
 
-    public function __construct( ) {
+    /**
+     * Constrict
+     */
+
+    public function __construct() {
         $this->environment = wp_get_environment_type();
     }
 
-    private function validate() {
+    /**
+     * Validate
+     *
+     * @return void
+     */
+
+    private function validate(): void {
 
         if ( 'production' === $this->environment ) {
             WP_CLI::log( __( 'You are not allowed to run this command on production.', 'mode-scrambler' ) );
             die();
         }
+
     }
+
+    /**
+     * Set Properties
+     *
+     * @param array $args
+     *
+     * @return void
+     */
 
     private function set_properties( array $args ): void {
 
@@ -49,8 +76,7 @@ class Scrambler {
 
             if ( property_exists( $this, $key ) ) {
                 $this->$key = $value;
-            }
-            else {
+            } else {
                 WP_CLI::log( sprintf( '"%s" is not a valid argument!!', $key ) );
                 die();
             }
@@ -58,22 +84,58 @@ class Scrambler {
         }
 
     }
-    
-    private function get_like() {
+
+    /**
+     * Get LIKE
+     *
+     * @return string
+     */
+
+    private function get_like(): string {
+
         global $wpdb;
 
         return '%' . $wpdb->esc_like( esc_sql( $this->email ) ) . '%';
+
     }
-    
-    private function email_formula( $column, $string = '@test.local' ): string {
+
+    /**
+     * Email Formula
+     *
+     * @param string $column
+     * @param string $string
+     *
+     * @return string
+     */
+
+    private function email_formula( string $column, string $string = '@test.local' ): string {
         return sprintf( "concat(substring_index($column, '@', 1), FLOOR(rand() * 90000 + 10000), '%s')", $string );
     }
 
-    private function name_formula( $string ): string {
+    /**
+     * Name Formula
+     *
+     * @param string $string
+     *
+     * @return string
+     */
+
+    private function name_formula( string $string ): string {
         return sprintf( "concat('%s', FLOOR(rand() * 90000 + 10000) )", $string );
     }
 
-    public function wp( $args, $assoc_args ) {
+    /**
+     * WP
+     *
+     * Scramble WordPress user data.
+     *
+     * @param array $args
+     * @param array $assoc_args
+     *
+     * @return void
+     */
+
+    public function wp( array $args, array $assoc_args ): void {
 
         global $wpdb;
 
@@ -114,7 +176,19 @@ class Scrambler {
 
     }
 
-    public function wc( $args, $assoc_args ) {
+    /**
+     * WC
+     *
+     * Scramble WooCommerce customer data.
+     *
+     * @param array $args
+     * @param array $assoc_args
+     *
+     * @return void
+     */
+
+    public function wc( array $args, array $assoc_args ): void {
+
         global $wpdb;
 
         $this->validate();
@@ -185,7 +259,15 @@ class Scrambler {
 
     }
 
-    public function version() {
+    /**
+     * Version
+     *
+     * Output plugin version.
+     *
+     * @return void
+     */
+
+    public function version(): void {
         WP_CLI::log( sprintf( 'Scrambler Version: %s', MODE_SCRAMBLER_VERSION ) );
     }
 
