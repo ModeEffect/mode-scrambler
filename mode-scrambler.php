@@ -3,7 +3,7 @@
 Plugin Name: ModeEffect Scrambler
 Plugin URI: https://modeeffect.com/
 Description: Scramble sensitive user data and WooCommerce customer data.
-Version: 1.0.0
+Version: 1.0.1
 Author: KevinBrent
 Author URI: https://modeeffect.com/
 Contributors: KevinBrent
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MODE_SCRAMBLER_VERSION', '1.0.0' );
+define( 'MODE_SCRAMBLER_VERSION', '1.0.1' );
 
 class Scrambler {
 
@@ -145,25 +145,10 @@ class Scrambler {
         $wpdb->query( $wpdb->prepare(
             "
             UPDATE $wpdb->users
-            SET user_email = {$this->email_formula( 'user_email' )} 
-            WHERE user_email NOT LIKE %s
-            ",
-            $this->get_like()
-        ) );
-
-        $wpdb->query( $wpdb->prepare(
-            "
-            UPDATE $wpdb->users 
-            SET display_name = {$this->name_formula( 'Test User ' )} 
-            WHERE user_email NOT LIKE %s
-            ",
-            $this->get_like()
-        ) );
-
-        $wpdb->query( $wpdb->prepare(
-            "
-            UPDATE $wpdb->users 
-            SET user_login = {$this->email_formula( 'user_email' )} 
+            SET user_email = {$this->email_formula( 'user_email' )},
+                display_name = {$this->name_formula( 'Test User ' )},
+                user_login = {$this->name_formula( 'test' )},
+                user_nicename = {$this->name_formula( 'test' )}
             WHERE user_email NOT LIKE %s
             ",
             $this->get_like()
@@ -254,8 +239,52 @@ class Scrambler {
             $this->get_like()
         ) );
 
+        WP_CLI::log( __( $wpdb->usermeta . ' scrambled successfully!', 'mode-scrambler' ) );
 
-        WP_CLI::log( __( 'WooCommerce customer data scrambled successfully!', 'mode-scrambler' ) );
+        if ( $wpdb->query( "SHOW TABLES LIKE '{$wpdb->prefix}wc_customer_lookup'" ) ) {
+
+            $wpdb->query( $wpdb->prepare(
+                "
+            UPDATE {$wpdb->prefix}wc_customer_lookup
+            SET username = {$this->name_formula( 'test' )},
+                first_name = {$this->name_formula( 'Test' )},
+                last_name = {$this->name_formula( 'Customer' )},
+                email = {$this->email_formula( 'email' )},
+                postcode = '86262',
+                city = 'Scottsdale',
+                state = 'AZ'
+            WHERE email NOT LIKE %s
+            ",
+                $this->get_like()
+            ) );
+
+            WP_CLI::log( __( $wpdb->prefix . 'wc_customer_lookup scrambled successfully!', 'mode-scrambler' ) );
+
+        }
+
+        if ( $wpdb->query( "SHOW TABLES LIKE '{$wpdb->prefix}wc_order_addresses'" ) ) {
+
+            $wpdb->query( $wpdb->prepare(
+                "
+                UPDATE {$wpdb->prefix}wc_order_addresses
+                SET first_name = {$this->name_formula( 'Test' )},
+                    last_name = {$this->name_formula( 'Customer' )},
+                    email = {$this->email_formula( 'email' )},
+                    address_1 = '123 East Main',
+                    postcode = '86262',
+                    city = 'Scottsdale',
+                    state = 'AZ',
+                    phone = '(888) 555-1212'
+                WHERE email NOT LIKE %s
+                ",
+                $this->get_like()
+            ) );
+
+            WP_CLI::log( __( $wpdb->prefix . 'wc_order_addresses scrambled successfully!', 'mode-scrambler' ) );
+            
+        }
+
+        WP_CLI::log( __( 'Data scrambled successfully!', 'mode-scrambler' ) );
 
     }
 
