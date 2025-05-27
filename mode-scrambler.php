@@ -3,7 +3,7 @@
 Plugin Name: ModeEffect Scrambler
 Plugin URI: https://modeeffect.com/
 Description: Scramble sensitive user data and WooCommerce customer data.
-Version: 1.0.1
+Version: 1.0.2
 Author: KevinBrent
 Author URI: https://modeeffect.com/
 Contributors: KevinBrent
@@ -23,7 +23,7 @@ if ( ! defined( 'ABSPATH' ) ) {
     exit;
 }
 
-define( 'MODE_SCRAMBLER_VERSION', '1.0.1' );
+define( 'MODE_SCRAMBLER_VERSION', '1.0.2' );
 
 class Scrambler {
 
@@ -179,6 +179,9 @@ class Scrambler {
         $this->validate();
         $this->set_properties( $assoc_args );
 
+        /**
+         * Users
+         */
         $wpdb->query( $wpdb->prepare(
             "
             UPDATE $wpdb->usermeta um
@@ -186,18 +189,6 @@ class Scrambler {
                 ON u.ID = um.user_id
             SET um.meta_value = {$this->email_formula( 'um.meta_value' )} 
             WHERE um.meta_key LIKE '%_email'
-                AND u.user_email NOT LIKE %s
-            ",
-            $this->get_like()
-        ) );
-
-        $wpdb->query( $wpdb->prepare(
-            "
-            UPDATE $wpdb->usermeta um
-            INNER JOIN $wpdb->users u
-                ON u.ID = um.user_id
-            SET um.meta_value = {$this->name_formula( 'Test' )} 
-            WHERE um.meta_key LIKE '%_first_name'
                 AND u.user_email NOT LIKE %s
             ",
             $this->get_like()
@@ -241,6 +232,56 @@ class Scrambler {
 
         WP_CLI::log( __( $wpdb->usermeta . ' scrambled successfully!', 'mode-scrambler' ) );
 
+        /**
+         * Post Meta
+         */
+        $wpdb->query( $wpdb->prepare(
+            "
+            UPDATE $wpdb->postmeta pm
+            INNER JOIN $wpdb->posts p
+                ON p.ID = pm.post_id
+            SET pm.meta_value = {$this->email_formula( 'pm.meta_value' )} 
+            WHERE pm.meta_key LIKE '%_email'
+                AND pm.meta_value NOT LIKE %s
+            ",
+            $this->get_like()
+        ) );
+
+        $wpdb->query(
+            "
+            UPDATE $wpdb->postmeta pm
+            INNER JOIN $wpdb->posts p
+                ON p.ID = pm.post_id
+            SET pm.meta_value = {$this->name_formula( 'Customer' )} 
+            WHERE pm.meta_key LIKE '%_last_name'
+            "
+        );
+
+        $wpdb->query(
+            "
+            UPDATE $wpdb->postmeta pm
+            INNER JOIN $wpdb->posts p
+                ON p.ID = pm.post_id
+            SET pm.meta_value = '123 East Main' 
+            WHERE pm.meta_key LIKE '%_address_1'
+            "
+        );
+
+        $wpdb->query(
+            "
+            UPDATE $wpdb->postmeta pm
+            INNER JOIN $wpdb->posts p
+                ON p.ID = pm.post_id
+            SET pm.meta_value = '(888) 555-1212' 
+            WHERE pm.meta_key LIKE '%_phone'
+            "
+        );
+
+        WP_CLI::log( __( $wpdb->postmeta . ' scrambled successfully!', 'mode-scrambler' ) );
+
+        /**
+         * WooCommerce lookups
+         */
         if ( $wpdb->query( "SHOW TABLES LIKE '{$wpdb->prefix}wc_customer_lookup'" ) ) {
 
             $wpdb->query( $wpdb->prepare(
@@ -281,7 +322,7 @@ class Scrambler {
             ) );
 
             WP_CLI::log( __( $wpdb->prefix . 'wc_order_addresses scrambled successfully!', 'mode-scrambler' ) );
-            
+
         }
 
         WP_CLI::log( __( 'Data scrambled successfully!', 'mode-scrambler' ) );
